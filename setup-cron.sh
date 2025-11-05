@@ -23,10 +23,10 @@ fi
 # Create cron script
 cat > /tmp/publish-scheduled-cron.sh << 'EOF'
 #!/bin/bash
-curl -X GET "https://leakybabes.net/api/cron/publish-scheduled" \
+curl -X GET "https://risquemega.net/api/cron/publish-scheduled" \
   -H "Authorization: Bearer $CRON_SECRET" \
   -H "Content-Type: application/json" \
-  >> /var/log/leakynew-cron.log 2>&1
+  >> /var/log/risquemega-cron.log 2>&1
 EOF
 
 # Replace CRON_SECRET placeholder
@@ -39,8 +39,8 @@ chmod +x /tmp/publish-scheduled-cron.sh
 sudo mv /tmp/publish-scheduled-cron.sh /usr/local/bin/publish-scheduled-cron.sh
 
 # Create log file
-sudo touch /var/log/leakynew-cron.log
-sudo chmod 666 /var/log/leakynew-cron.log
+sudo touch /var/log/risquemega-cron.log
+sudo chmod 666 /var/log/risquemega-cron.log
 
 # Add cron job (runs every 5 minutes)
 CRON_JOB="*/5 * * * * /usr/local/bin/publish-scheduled-cron.sh"
@@ -50,9 +50,9 @@ CRON_JOB="*/5 * * * * /usr/local/bin/publish-scheduled-cron.sh"
 
 echo "✓ Cron job installed successfully!"
 echo "  - Runs every 5 minutes"
-echo "  - Endpoint: https://leakybabes.net/api/cron/publish-scheduled"
-echo "  - Logs: /var/log/leakynew-cron.log"
+echo "  - Endpoint: https://risquemega.net/api/cron/publish-scheduled"
+echo "  - Logs: /var/log/risquemega-cron.log"
 echo ""
-echo "To view logs: tail -f /var/log/leakynew-cron.log"
+echo "To view logs: tail -f /var/log/risquemega-cron.log"
 echo "To list cron jobs: crontab -l"
 echo "To remove cron job: crontab -e (then delete the line)"
