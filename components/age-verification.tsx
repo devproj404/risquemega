@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-const AGE_VERIFIED_KEY = 'leakybabes_age_verified';
+const AGE_VERIFIED_KEY = 'risquemega_age_verified';
 const AGE_VERIFIED_VALUE = 'confirmed';
 
 export function AgeVerification() {
@@ -91,8 +91,8 @@ export function AgeVerification() {
       <div className="relative z-10 text-center px-4 max-w-md mx-auto">
         {/* Logo */}
         <h1 className="text-5xl md:text-6xl font-bold mb-8">
-          <span className="text-white">leaky</span>
-          <span className="text-pink-500">babes</span>
+          <span className="text-white">Risque</span>
+          <span className="text-yellow-500">Mega</span>
         </h1>
 
         {/* Description */}
@@ -103,7 +103,7 @@ export function AgeVerification() {
         {/* Enter Button */}
         <button
           onClick={handleEnter}
-          className="bg-pink-500 hover:bg-pink-600 text-white font-semibold text-lg px-8 py-3 rounded transition-colors duration-200 uppercase tracking-wide shadow-lg"
+          className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold text-lg px-8 py-3 rounded transition-colors duration-200 uppercase tracking-wide shadow-lg"
         >
           I AM 18 OR OLDER - ENTER
         </button>
