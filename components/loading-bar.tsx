@@ -16,8 +16,14 @@ export function LoadingBar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // Fallback: Complete progress after route change (pages can override by calling NProgress.start() again)
   useEffect(() => {
-    NProgress.done();
+    // Small delay to allow pages to take over control if they want
+    const timer = setTimeout(() => {
+      NProgress.done();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [pathname, searchParams]);
 
   // Intercept all link clicks to start progress

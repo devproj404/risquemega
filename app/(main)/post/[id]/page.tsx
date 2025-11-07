@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Image as ImageIcon, Video, ArrowLeft, ArrowRight, X, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import NProgress from 'nprogress';
 import { VIPUpgradeModal } from '@/components/vip-upgrade-modal';
 import { PostDetailSkeleton } from '@/components/skeleton';
 import { CategoryCard } from '@/components/category-card';
@@ -93,6 +94,8 @@ export default function PostDetailPage() {
       try {
         setIsLoading(true);
         setIsLoadingSecondary(true);
+        NProgress.start(); // Start at 0%
+
         const response = await fetch(`/api/posts/${postId}`);
         if (response.ok) {
           const data = await response.json();
@@ -118,6 +121,7 @@ export default function PostDetailPage() {
 
           // ✅ SHOW MAIN CONTENT IMMEDIATELY - Stop blocking here
           setIsLoading(false);
+          NProgress.set(0.5); // 50% - Main content loaded
 
           // 🔄 BACKGROUND FETCH: Load secondary data asynchronously (non-blocking)
           const [creatorsData, relatedData, , , userData] = await Promise.allSettled([
@@ -197,11 +201,13 @@ export default function PostDetailPage() {
 
           // ✅ Secondary data loaded
           setIsLoadingSecondary(false);
+          NProgress.done(); // 100% - All content loaded
         }
       } catch (error) {
         console.error('Failed to fetch post:', error);
         setIsLoading(false);
         setIsLoadingSecondary(false);
+        NProgress.done(); // Complete on error too
       }
     };
 
