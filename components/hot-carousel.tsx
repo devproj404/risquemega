@@ -15,9 +15,10 @@ interface Post {
 
 interface HotCarouselProps {
   posts: Post[];
+  isLoading?: boolean;
 }
 
-export const HotCarousel: React.FC<HotCarouselProps> = ({ posts }) => {
+export const HotCarousel: React.FC<HotCarouselProps> = ({ posts, isLoading = false }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -79,6 +80,41 @@ export const HotCarousel: React.FC<HotCarouselProps> = ({ posts }) => {
       clearInterval(rotateTimer);
     };
   }, [posts.length]);
+
+  // Show skeleton loader when loading
+  if (isLoading) {
+    return (
+      <div className="w-full bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-2xl overflow-hidden border border-gray-800 shadow-2xl shadow-[0_0_30px_rgba(234,179,8,0.3)]">
+        <div className="relative">
+          {/* Progress Bar Skeleton */}
+          <div className="w-full h-1.5 bg-gray-800/50 overflow-hidden animate-pulse" />
+
+          {/* Header */}
+          <div className="px-3 pt-2 pb-2 bg-black/40 backdrop-blur-sm border-b border-gray-800">
+            <div className="flex items-center justify-between">
+              <h3 className="text-white font-bold text-sm">HOT</h3>
+              <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse"></span>
+                <span>Trending</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Skeleton Content */}
+          <div className="p-3 animate-pulse">
+            <div className="w-full aspect-[3/4] bg-gray-800 rounded-2xl"></div>
+          </div>
+
+          {/* Indicators Skeleton */}
+          <div className="flex justify-center gap-1.5 py-3 px-3 bg-black/20">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-1.5 w-1.5 rounded-full bg-gray-700"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (posts.length === 0) return null;
 

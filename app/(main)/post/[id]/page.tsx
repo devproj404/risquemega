@@ -56,6 +56,7 @@ export default function PostDetailPage() {
   const [previousPost, setPreviousPost] = useState<Post | null>(null);
   const [nextPost, setNextPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingSecondary, setIsLoadingSecondary] = useState(true);
   const [selectedMedia, setSelectedMedia] = useState<{ type: 'image' | 'video'; url: string } | null>(null);
   const [showFullSizeMedia, setShowFullSizeMedia] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
@@ -91,6 +92,7 @@ export default function PostDetailPage() {
     const fetchPost = async () => {
       try {
         setIsLoading(true);
+        setIsLoadingSecondary(true);
         const response = await fetch(`/api/posts/${postId}`);
         if (response.ok) {
           const data = await response.json();
@@ -114,7 +116,10 @@ export default function PostDetailPage() {
             setCurrentMediaIndex(0);
           }
 
-          // PARALLEL FETCH: Fetch all secondary data simultaneously
+          // ✅ SHOW MAIN CONTENT IMMEDIATELY - Stop blocking here
+          setIsLoading(false);
+
+          // 🔄 BACKGROUND FETCH: Load secondary data asynchronously (non-blocking)
           const [creatorsData, relatedData, , , userData] = await Promise.allSettled([
             // Fetch creators
             data.post.actressIds && data.post.actressIds.length > 0
@@ -189,11 +194,14 @@ export default function PostDetailPage() {
           } else {
             setIsLoggedIn(false);
           }
+
+          // ✅ Secondary data loaded
+          setIsLoadingSecondary(false);
         }
       } catch (error) {
         console.error('Failed to fetch post:', error);
-      } finally {
         setIsLoading(false);
+        setIsLoadingSecondary(false);
       }
     };
 
@@ -806,11 +814,11 @@ export default function PostDetailPage() {
           )}
 
           {/* Collections */}
-          <CollectionCard creators={creators} />
+          <CollectionCard creators={creators} isLoading={isLoadingSecondary} />
 
           {/* Hot Carousel */}
-          {relatedPosts.length > 0 && (
-            <HotCarousel posts={relatedPosts.slice(0, 6)} />
+          {(isLoadingSecondary || relatedPosts.length > 0) && (
+            <HotCarousel posts={relatedPosts.slice(0, 6)} isLoading={isLoadingSecondary} />
           )}
         </div>
       </div>
@@ -887,11 +895,19 @@ export default function PostDetailPage() {
       </Dialog>
 
       {/* More Posts - Bottom */}
-      {relatedPosts.length > 0 && (
-        <div>
-          <h3 className="text-white text-xl font-semibold mb-4">Most popular</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {relatedPosts.map((relatedPost) => (
+      <div>
+        <h3 className="text-white text-xl font-semibold mb-4">Most popular</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {isLoadingSecondary ? (
+            // Skeleton loaders while fetching
+            [...Array(6)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="relative aspect-[3/4] bg-gray-800 rounded-lg mb-2"></div>
+                <div className="h-4 bg-gray-800 rounded w-3/4"></div>
+              </div>
+            ))
+          ) : relatedPosts.length > 0 ? (
+            relatedPosts.map((relatedPost) => (
               <Link
                 key={relatedPost.id}
                 href={`/post/${relatedPost.id}`}
@@ -935,10 +951,10 @@ export default function PostDetailPage() {
                   {relatedPost._count.likes} VIEWS
                 </p>
               </Link>
-            ))}
-          </div>
+            ))
+          ) : null}
         </div>
-      )}
+      </div>
 
       {/* VIP Upgrade Modal */}
       <VIPUpgradeModal isOpen={isVipUpgradeModalOpen} onClose={() => setIsVipUpgradeModalOpen(false)} />

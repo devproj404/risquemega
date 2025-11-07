@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import './nprogress.css';
 import { Toaster } from '@/components/ui/sonner';
+import { LoadingBar } from '@/components/loading-bar';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -30,6 +32,7 @@ export default function RootLayout({
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL || ''} crossOrigin="anonymous" />
       </head>
       <body className={`${inter.className} bg-black`}>
+        <LoadingBar />
         {children}
         <Toaster />
       </body>
