@@ -6,10 +6,11 @@ import NProgress from 'nprogress';
 
 NProgress.configure({
   showSpinner: false,
-  trickleSpeed: 200,
+  trickle: true,
+  trickleSpeed: 300,
   minimum: 0.08,
   easing: 'ease',
-  speed: 500,
+  speed: 400,
 });
 
 export function LoadingBar() {

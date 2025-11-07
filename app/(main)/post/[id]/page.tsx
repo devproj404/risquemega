@@ -123,6 +123,9 @@ export default function PostDetailPage() {
           setIsLoading(false);
           NProgress.set(0.5); // 50% - Main content loaded
 
+          // Smoothly animate from 50% to ~70% while loading secondary data
+          setTimeout(() => NProgress.inc(0.1), 100);
+
           // 🔄 BACKGROUND FETCH: Load secondary data asynchronously (non-blocking)
           const [creatorsData, relatedData, , , userData] = await Promise.allSettled([
             // Fetch creators
