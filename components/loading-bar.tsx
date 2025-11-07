@@ -14,6 +14,22 @@ NProgress.configure({
 });
 
 export function LoadingBar() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Auto-complete fallback for pages that don't manually control progress
+  useEffect(() => {
+    // Wait 2 seconds after route change
+    // This gives pages time to take manual control (like post page)
+    // For simple pages, this ensures the bar completes
+    // NProgress.done() is idempotent - safe to call multiple times
+    const fallbackTimer = setTimeout(() => {
+      NProgress.done();
+    }, 2000);
+
+    return () => clearTimeout(fallbackTimer);
+  }, [pathname, searchParams]);
+
   // Intercept all link clicks to start progress
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
