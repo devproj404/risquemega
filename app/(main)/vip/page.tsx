@@ -123,10 +123,15 @@ export default function VIPPage() {
 
   const fetchCurrencies = async () => {
     try {
+      console.log('Fetching currencies...');
       const response = await fetch('/api/payment/currencies');
       if (response.ok) {
         const data = await response.json();
-        setCurrencies(data.currencies);
+        console.log('Received currencies:', data);
+        console.log('Currency count:', data.currencies?.length);
+        setCurrencies(data.currencies || []);
+      } else {
+        console.error('Failed to fetch currencies, status:', response.status);
       }
     } catch (error) {
       console.error('Failed to fetch currencies:', error);

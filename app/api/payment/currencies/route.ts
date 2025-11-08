@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
+    console.log('Fetching currencies from OxaPay...');
+
     const response = await fetch('https://api.oxapay.com/v1/common/currencies', {
       method: 'GET',
       headers: {
@@ -10,19 +12,33 @@ export async function GET() {
     });
 
     if (!response.ok) {
+      console.error('OxaPay API error:', response.status, response.statusText);
       throw new Error('Failed to fetch currencies from OxaPay');
     }
 
     const data = await response.json();
+    console.log('OxaPay response:', JSON.stringify(data, null, 2));
+
+    // Check if data exists and has the expected structure
+    if (!data || !data.data) {
+      console.error('Unexpected API response structure:', data);
+      throw new Error('Invalid response structure');
+    }
 
     // Extract and format currency list
-    const currencies = Object.entries(data.data || {}).map(([symbol, info]: [string, any]) => ({
+    const currencies = Object.entries(data.data).map(([symbol, info]: [string, any]) => ({
       symbol,
-      name: info.name,
+      name: info.name || symbol,
       networks: info.networks?.map((net: any) => net.network) || [],
     }));
 
-    return NextResponse.json({ currencies });
+    console.log('Parsed currencies:', currencies.length, 'coins');
+
+    return NextResponse.json({
+      currencies,
+      count: currencies.length,
+      success: true
+    });
   } catch (error) {
     console.error('Error fetching currencies:', error);
 
@@ -35,6 +51,13 @@ export async function GET() {
       { symbol: 'TRX', name: 'TRON', networks: ['Tron'] },
     ];
 
-    return NextResponse.json({ currencies: fallbackCurrencies });
+    console.log('Using fallback currencies');
+
+    return NextResponse.json({
+      currencies: fallbackCurrencies,
+      count: fallbackCurrencies.length,
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }
