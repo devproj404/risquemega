@@ -6,7 +6,7 @@
 #nprogress .bar {
   background: #fbbf24; /* Bright yellow */
   position: fixed;
-  z-index: 9999;
+  z-index: 10000;
   top: 56px; /* Position below navbar (h-14 = 56px) */
   left: 0;
   width: 100%;
@@ -14,6 +14,8 @@
   box-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
   border: none;
   outline: none;
+  margin: 0;
+  padding: 0;
 }
 
 #nprogress .peg {
@@ -35,4 +37,11 @@
 /* Ensure smooth transitions */
 #nprogress .bar {
   transition: width 0.4s ease;
+  will-change: width;
+}
+
+/* Ensure it stays on top when scrolling */
+#nprogress .bar {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }

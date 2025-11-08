@@ -94,7 +94,6 @@ export default function PostDetailPage() {
       try {
         setIsLoading(true);
         setIsLoadingSecondary(true);
-        NProgress.start(); // Start at 0%
 
         const response = await fetch(`/api/posts/${postId}`);
         if (response.ok) {

@@ -17,17 +17,15 @@ export function LoadingBar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Auto-complete fallback for pages that don't manually control progress
+  // Auto-complete on route change
   useEffect(() => {
-    // Wait 2 seconds after route change
-    // This gives pages time to take manual control (like post page)
-    // For simple pages, this ensures the bar completes
-    // NProgress.done() is idempotent - safe to call multiple times
-    const fallbackTimer = setTimeout(() => {
+    // For regular pages: complete quickly (300ms)
+    // For post pages: they will take control with NProgress.set(0.5) before this fires
+    const timer = setTimeout(() => {
       NProgress.done();
-    }, 2000);
+    }, 300);
 
-    return () => clearTimeout(fallbackTimer);
+    return () => clearTimeout(timer);
   }, [pathname, searchParams]);
 
   // Intercept all link clicks to start progress
@@ -37,12 +35,16 @@ export function LoadingBar() {
       const anchor = target.closest('a');
 
       if (anchor && anchor.href && !anchor.target) {
-        const url = new URL(anchor.href);
-        const currentUrl = new URL(window.location.href);
+        try {
+          const url = new URL(anchor.href);
+          const currentUrl = new URL(window.location.href);
 
-        // Only show progress for internal navigation
-        if (url.host === currentUrl.host && url.pathname !== currentUrl.pathname) {
-          NProgress.start();
+          // Only show progress for internal navigation
+          if (url.host === currentUrl.host && url.pathname !== currentUrl.pathname) {
+            NProgress.start();
+          }
+        } catch (e) {
+          // Invalid URL, ignore
         }
       }
     };
