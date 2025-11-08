@@ -33,6 +33,12 @@ interface PaymentConfig {
   };
 }
 
+interface Currency {
+  symbol: string;
+  name: string;
+  networks: string[];
+}
+
 interface FAQ {
   question: string;
   answer: string;
@@ -79,11 +85,14 @@ export default function VIPPage() {
   const [isLoadingRecent, setIsLoadingRecent] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [isLoadingCurrencies, setIsLoadingCurrencies] = useState(true);
 
   useEffect(() => {
     fetchUserStatus();
     fetchPaymentConfig();
     checkRecentPayment();
+    fetchCurrencies();
   }, []);
 
   const fetchUserStatus = async () => {
@@ -109,6 +118,20 @@ export default function VIPPage() {
       }
     } catch (error) {
       console.error('Failed to fetch payment config:', error);
+    }
+  };
+
+  const fetchCurrencies = async () => {
+    try {
+      const response = await fetch('/api/payment/currencies');
+      if (response.ok) {
+        const data = await response.json();
+        setCurrencies(data.currencies);
+      }
+    } catch (error) {
+      console.error('Failed to fetch currencies:', error);
+    } finally {
+      setIsLoadingCurrencies(false);
     }
   };
 
@@ -343,13 +366,25 @@ export default function VIPPage() {
                 value={selectedCrypto}
                 onChange={(e) => setSelectedCrypto(e.target.value)}
                 className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/20"
-                disabled={isProcessing}
+                disabled={isProcessing || isLoadingCurrencies}
               >
-                <option value="USDT">USDT (Tether)</option>
-                <option value="BTC">Bitcoin (BTC)</option>
-                <option value="ETH">Ethereum (ETH)</option>
-                <option value="LTC">Litecoin (LTC)</option>
-                <option value="TRX">TRON (TRX)</option>
+                {isLoadingCurrencies ? (
+                  <option>Loading currencies...</option>
+                ) : currencies.length > 0 ? (
+                  currencies.map((currency) => (
+                    <option key={currency.symbol} value={currency.symbol}>
+                      {currency.symbol} ({currency.name})
+                    </option>
+                  ))
+                ) : (
+                  <>
+                    <option value="USDT">USDT (Tether)</option>
+                    <option value="BTC">Bitcoin (BTC)</option>
+                    <option value="ETH">Ethereum (ETH)</option>
+                    <option value="LTC">Litecoin (LTC)</option>
+                    <option value="TRX">TRON (TRX)</option>
+                  </>
+                )}
               </select>
             </div>
 
