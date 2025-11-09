@@ -162,6 +162,137 @@ export default function PostsManagementPage() {
   const [editTagInput, setEditTagInput] = useState('');
   const [editIsVipContent, setEditIsVipContent] = useState(false);
 
+  // LocalStorage keys
+  const FORM_DRAFT_KEY = 'admin_post_form_draft';
+  const LAST_SETTINGS_KEY = 'admin_post_last_settings';
+
+  // Save form draft to localStorage (auto-save)
+  useEffect(() => {
+    if (!isCreateDialogOpen) return;
+
+    const formDraft = {
+      newPost,
+      imageUrls,
+      videoUrls,
+      bulkImageInput,
+      selectedCategories,
+      selectedCreators,
+      tags,
+      isVipContent,
+      isScheduled,
+      scheduledDate,
+      scheduledTime,
+      savedAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem(FORM_DRAFT_KEY, JSON.stringify(formDraft));
+  }, [
+    newPost,
+    imageUrls,
+    videoUrls,
+    bulkImageInput,
+    selectedCategories,
+    selectedCreators,
+    tags,
+    isVipContent,
+    isScheduled,
+    scheduledDate,
+    scheduledTime,
+    isCreateDialogOpen,
+  ]);
+
+  // Load form draft from localStorage on mount
+  useEffect(() => {
+    const loadFormDraft = () => {
+      try {
+        const savedDraft = localStorage.getItem(FORM_DRAFT_KEY);
+        if (savedDraft) {
+          const draft = JSON.parse(savedDraft);
+          const savedAt = new Date(draft.savedAt);
+          const hoursSinceLastSave = (Date.now() - savedAt.getTime()) / (1000 * 60 * 60);
+
+          // Only restore if saved within last 24 hours
+          if (hoursSinceLastSave < 24) {
+            setNewPost(draft.newPost || {
+              title: '',
+              description: '',
+              thumbnailUrl: '',
+              sourceUrl: '',
+            });
+            setImageUrls(draft.imageUrls || []);
+            setVideoUrls(draft.videoUrls || []);
+            setBulkImageInput(draft.bulkImageInput || '');
+            setSelectedCategories(draft.selectedCategories || []);
+            setSelectedCreators(draft.selectedCreators || []);
+            setTags(draft.tags || []);
+            setIsVipContent(draft.isVipContent || false);
+            setIsScheduled(draft.isScheduled || false);
+            if (draft.scheduledDate) setScheduledDate(draft.scheduledDate);
+            if (draft.scheduledTime) setScheduledTime(draft.scheduledTime);
+
+            toast.success('Draft restored from auto-save');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load form draft:', error);
+      }
+    };
+
+    loadFormDraft();
+  }, []);
+
+  // Load last settings (smart defaults)
+  useEffect(() => {
+    try {
+      const savedSettings = localStorage.getItem(LAST_SETTINGS_KEY);
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+
+        // Apply last settings as defaults when dialog opens
+        if (isCreateDialogOpen && settings) {
+          // Only set defaults if form is empty (not restoring a draft)
+          const isDraftEmpty = !newPost.title && imageUrls.length === 0;
+
+          if (isDraftEmpty) {
+            if (settings.defaultScheduledTime) {
+              setScheduledTime(settings.defaultScheduledTime);
+            }
+            if (settings.lastIsVip !== undefined) {
+              setIsVipContent(settings.lastIsVip);
+            }
+            if (settings.lastIsScheduled !== undefined) {
+              setIsScheduled(settings.lastIsScheduled);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load last settings:', error);
+    }
+  }, [isCreateDialogOpen]);
+
+  // Save last settings on successful post creation
+  const saveLastSettings = () => {
+    try {
+      const settings = {
+        defaultScheduledTime: scheduledTime,
+        lastIsVip: isVipContent,
+        lastIsScheduled: isScheduled,
+        lastCategories: selectedCategories,
+        lastCreators: selectedCreators,
+        savedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(LAST_SETTINGS_KEY, JSON.stringify(settings));
+    } catch (error) {
+      console.error('Failed to save last settings:', error);
+    }
+  };
+
+  // Clear form draft from localStorage
+  const clearFormDraft = () => {
+    localStorage.removeItem(FORM_DRAFT_KEY);
+  };
+
   useEffect(() => {
     fetchCategories();
     fetchCreators();
@@ -463,6 +594,13 @@ export default function PostsManagementPage() {
       }
 
       toast.success(isScheduled ? 'Post scheduled successfully' : 'Post created successfully');
+
+      // Save last settings for next time (smart defaults)
+      saveLastSettings();
+
+      // Clear form draft from localStorage
+      clearFormDraft();
+
       setIsCreateDialogOpen(false);
       setNewPost({
         title: '',
@@ -682,8 +820,36 @@ export default function PostsManagementPage() {
             </Button>
           </DialogTrigger>
           <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-5xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
+            <DialogHeader className="flex flex-row items-center justify-between">
               <DialogTitle className="text-white">Create New Post</DialogTitle>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  clearFormDraft();
+                  setNewPost({
+                    title: '',
+                    description: '',
+                    thumbnailUrl: '',
+                    sourceUrl: '',
+                  });
+                  setImageUrls([]);
+                  setVideoUrls([]);
+                  setBulkImageInput('');
+                  setSelectedCategories([]);
+                  setSelectedCreators([]);
+                  setTags([]);
+                  setIsVipContent(false);
+                  setIsScheduled(false);
+                  setScheduledDate(getCurrentDate());
+                  setScheduledTime(getCurrentTime());
+                  toast.success('Form cleared');
+                }}
+                className="text-gray-400 hover:text-white text-xs"
+              >
+                Clear Draft
+              </Button>
             </DialogHeader>
             <form onSubmit={handleCreatePost} className="mt-4">
               <div className="grid grid-cols-2 gap-6">

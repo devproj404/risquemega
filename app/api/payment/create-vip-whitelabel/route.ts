@@ -65,16 +65,31 @@ export async function POST(request: Request) {
     const body = await request.json();
     const payCurrency = body.payCurrency || 'USDT'; // Default to USDT
 
-    // Map crypto to default network
+    // Map crypto to default network (comprehensive list)
     const networkMap: Record<string, string> = {
-      'USDT': 'tron',  // TRC20 is most popular for USDT
-      'BTC': 'btc',
-      'ETH': 'eth',
-      'LTC': 'ltc',
-      'TRX': 'tron',
+      'USDT': 'tron',     // TRC20 is most popular for USDT
+      'BTC': 'bitcoin',   // Bitcoin network
+      'ETH': 'ethereum',  // Ethereum network
+      'LTC': 'litecoin',  // Litecoin network
+      'TRX': 'tron',      // Tron network
+      'BNB': 'bsc',       // Binance Smart Chain
+      'USDC': 'ethereum', // USD Coin on Ethereum
+      'SOL': 'solana',    // Solana network
+      'MATIC': 'polygon', // Polygon network
+      'DOGE': 'dogecoin', // Dogecoin network
+      'XRP': 'ripple',    // Ripple network
+      'ADA': 'cardano',   // Cardano network
+      'DOT': 'polkadot',  // Polkadot network
+      'AVAX': 'avalanche', // Avalanche network
+      'SHIB': 'ethereum', // Shiba Inu on Ethereum
+      'DAI': 'ethereum',  // DAI on Ethereum
+      'TON': 'ton',       // TON network
+      'BCH': 'bitcoincash', // Bitcoin Cash
+      'XLM': 'stellar',   // Stellar network
+      'ATOM': 'cosmos',   // Cosmos network
     };
 
-    const network = body.network || networkMap[payCurrency] || 'tron';
+    const network = body.network || networkMap[payCurrency] || networkMap[payCurrency.toUpperCase()] || 'tron';
 
     // Get base URL for callbacks
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';

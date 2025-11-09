@@ -94,6 +94,7 @@ export default function PostDetailPage() {
       try {
         setIsLoading(true);
         setIsLoadingSecondary(true);
+        NProgress.start(); // 0% - Start loading
 
         const response = await fetch(`/api/posts/${postId}`);
         if (response.ok) {
@@ -903,19 +904,11 @@ export default function PostDetailPage() {
       </Dialog>
 
       {/* More Posts - Bottom */}
-      <div>
-        <h3 className="text-white text-xl font-semibold mb-4">Most popular</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {isLoadingSecondary ? (
-            // Skeleton loaders while fetching
-            [...Array(6)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="relative aspect-[3/4] bg-gray-800 rounded-lg mb-2"></div>
-                <div className="h-4 bg-gray-800 rounded w-3/4"></div>
-              </div>
-            ))
-          ) : relatedPosts.length > 0 ? (
-            relatedPosts.map((relatedPost) => (
+      {relatedPosts.length > 0 && (
+        <div>
+          <h3 className="text-white text-xl font-semibold mb-4">Most popular</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {relatedPosts.map((relatedPost) => (
               <Link
                 key={relatedPost.id}
                 href={`/post/${relatedPost.id}`}
@@ -959,10 +952,10 @@ export default function PostDetailPage() {
                   {relatedPost._count.likes} VIEWS
                 </p>
               </Link>
-            ))
-          ) : null}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* VIP Upgrade Modal */}
       <VIPUpgradeModal isOpen={isVipUpgradeModalOpen} onClose={() => setIsVipUpgradeModalOpen(false)} />

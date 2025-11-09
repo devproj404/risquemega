@@ -26,11 +26,22 @@ export async function GET() {
     }
 
     // Extract and format currency list
-    const currencies = Object.entries(data.data).map(([symbol, info]: [string, any]) => ({
-      symbol,
-      name: info.name || symbol,
-      networks: info.networks?.map((net: any) => net.network) || [],
-    }));
+    const currencies = Object.entries(data.data).map(([symbol, info]: [string, any]) => {
+      // Handle different network structures
+      let networks: string[] = [];
+      if (Array.isArray(info.networks)) {
+        networks = info.networks.map((net: any) => net.network || net);
+      } else if (info.networks && typeof info.networks === 'object') {
+        // If networks is an object, extract keys or values
+        networks = Object.keys(info.networks);
+      }
+
+      return {
+        symbol,
+        name: info.name || symbol,
+        networks,
+      };
+    });
 
     console.log('Parsed currencies:', currencies.length, 'coins');
 
