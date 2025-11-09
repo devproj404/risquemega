@@ -63,6 +63,7 @@ export async function Navbar() {
                   <NavbarClient hasUser={true} />
                   <ChatIcon />
                   <NotificationIcon />
+                  <UserNav user={user} />
                   <Link
                     href="https://t.me/risquemegastatus"
                     target="_blank"
@@ -75,7 +76,6 @@ export async function Navbar() {
                       className="w-5 h-5"
                     />
                   </Link>
-                  <UserNav user={user} />
                 </div>
                 {/* Mobile Menu */}
                 <div className="md:hidden">
@@ -87,6 +87,12 @@ export async function Navbar() {
                 {/* Desktop Sign In */}
                 <div className="hidden md:flex items-center gap-5">
                   <Link
+                    href="/login"
+                    className="text-white text-base font-medium px-4 py-2 hover:text-pink-400 transition relative z-50 inline-block"
+                  >
+                    SIGN IN
+                  </Link>
+                  <Link
                     href="https://t.me/risquemegastatus"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -97,12 +103,6 @@ export async function Navbar() {
                       alt="Telegram"
                       className="w-5 h-5"
                     />
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="text-white text-base font-medium px-4 py-2 hover:text-pink-400 transition relative z-50 inline-block"
-                  >
-                    SIGN IN
                   </Link>
                 </div>
                 {/* Mobile Menu */}
