@@ -17,13 +17,14 @@ export function LoadingBar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Auto-complete on route change
+  // Auto-complete fallback on route change
   useEffect(() => {
-    // For regular pages: complete quickly (300ms)
-    // For post pages: they will take control with NProgress.set(0.5) before this fires
+    // Give pages 2 seconds to take manual control
+    // Post pages will call NProgress.set(0.5) within ~100-500ms
+    // Other pages will auto-complete after 2s
     const timer = setTimeout(() => {
       NProgress.done();
-    }, 300);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [pathname, searchParams]);
