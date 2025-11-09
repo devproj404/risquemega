@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { Suspense } from 'react';
 import './globals.css';
 import './nprogress.css';
 import { Toaster } from '@/components/ui/sonner';
@@ -32,7 +33,9 @@ export default function RootLayout({
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL || ''} crossOrigin="anonymous" />
       </head>
       <body className={`${inter.className} bg-black`}>
-        <LoadingBar />
+        <Suspense fallback={null}>
+          <LoadingBar />
+        </Suspense>
         {children}
         <Toaster />
       </body>
