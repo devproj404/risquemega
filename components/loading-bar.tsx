@@ -19,12 +19,19 @@ export function LoadingBar() {
 
   // Auto-complete fallback on route change
   useEffect(() => {
-    // Give pages 2 seconds to take manual control
-    // Post pages will call NProgress.set(0.5) within ~100-500ms
-    // Other pages will auto-complete after 2s
+    // Check if current page is a post page (manual control)
+    const isPostPage = pathname.startsWith('/post/');
+
+    if (isPostPage) {
+      // Post pages control their own progress (0% → 50% → 100%)
+      // Don't auto-complete
+      return;
+    }
+
+    // For other pages: auto-complete after 1 second
     const timer = setTimeout(() => {
       NProgress.done();
-    }, 2000);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [pathname, searchParams]);
