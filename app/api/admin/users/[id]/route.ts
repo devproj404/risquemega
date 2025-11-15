@@ -6,6 +6,8 @@ import { z } from 'zod';
 const updateUserSchema = z.object({
   isVerified: z.boolean().optional(),
   isBanned: z.boolean().optional(),
+  isVip: z.boolean().optional(),
+  vipUntil: z.string().optional().nullable(),
 });
 
 // GET single user
@@ -86,15 +88,32 @@ export async function PATCH(
       );
     }
 
+    // Prepare update data
+    const updateData: any = {};
+    if (validation.data.isVerified !== undefined) {
+      updateData.isVerified = validation.data.isVerified;
+    }
+    if (validation.data.isBanned !== undefined) {
+      updateData.isBanned = validation.data.isBanned;
+    }
+    if (validation.data.isVip !== undefined) {
+      updateData.isVip = validation.data.isVip;
+    }
+    if (validation.data.vipUntil !== undefined) {
+      updateData.vipUntil = validation.data.vipUntil ? new Date(validation.data.vipUntil) : null;
+    }
+
     const user = await prisma.user.update({
       where: { id },
-      data: validation.data,
+      data: updateData,
       select: {
         id: true,
         username: true,
         email: true,
         isVerified: true,
         isBanned: true,
+        isVip: true,
+        vipUntil: true,
       },
     });
 
@@ -126,6 +145,23 @@ export async function PATCH(
           details: {
             targetUser: user.username,
             changes: { isVerified: validation.data.isVerified },
+          },
+        },
+      });
+    }
+
+    if (validation.data.isVip !== undefined) {
+      await prisma.activityLog.create({
+        data: {
+          action: validation.data.isVip ? 'USER_VIP_GRANT' : 'USER_VIP_REVOKE',
+          entityType: 'User',
+          entityId: user.id,
+          userId: admin.id,
+          username: admin.username,
+          details: {
+            targetUser: user.username,
+            targetEmail: user.email,
+            vipUntil: validation.data.vipUntil || null,
           },
         },
       });

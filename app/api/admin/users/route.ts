@@ -48,6 +48,7 @@ export async function GET(request: Request) {
           isVerified: true,
           isBanned: true,
           isVip: true,
+          vipUntil: true,
           createdAt: true,
           _count: {
             select: {
