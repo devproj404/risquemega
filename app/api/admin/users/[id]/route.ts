@@ -98,9 +98,8 @@ export async function PATCH(
     }
     if (validation.data.isVip !== undefined) {
       updateData.isVip = validation.data.isVip;
-    }
-    if (validation.data.vipUntil !== undefined) {
-      updateData.vipUntil = validation.data.vipUntil ? new Date(validation.data.vipUntil) : null;
+      // VIP is lifetime, set vipUntil to null
+      updateData.vipUntil = null;
     }
 
     const user = await prisma.user.update({
@@ -161,7 +160,7 @@ export async function PATCH(
           details: {
             targetUser: user.username,
             targetEmail: user.email,
-            vipUntil: validation.data.vipUntil || null,
+            lifetime: true,
           },
         },
       });
