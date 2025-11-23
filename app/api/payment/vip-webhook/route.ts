@@ -4,18 +4,22 @@ import { oxapay } from '@/lib/oxapay';
 
 export async function POST(request: NextRequest) {
   try {
+    // Log ALL webhook requests for debugging
+    console.log('\n╔══════════════════════════════════════════════════════╗');
+    console.log('║   VIP WEBHOOK RECEIVED                               ║');
+    console.log('╚══════════════════════════════════════════════════════╝');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Headers:', JSON.stringify(Object.fromEntries(request.headers), null, 2));
+    console.log('URL:', request.url);
+    console.log('Method:', request.method);
+
     const body = await request.json();
 
     const isTestMode = process.env.PAYMENT_TEST_MODE === 'true';
 
-    if (!isTestMode) {
-      console.log('=== PRODUCTION VIP WEBHOOK RECEIVED ===');
-      console.log('Timestamp:', new Date().toISOString());
-      console.log('Webhook Data:', JSON.stringify(body, null, 2));
-      console.log('======================================');
-    } else {
-      console.log('VIP Webhook received (TEST MODE):', body);
-    }
+    console.log('Mode:', isTestMode ? 'TEST' : 'PRODUCTION');
+    console.log('Webhook Body:', JSON.stringify(body, null, 2));
+    console.log('═'.repeat(56));
 
     const {
       trackId,
@@ -68,7 +72,14 @@ export async function POST(request: NextRequest) {
     });
 
     // If payment is completed, upgrade user to VIP
+    console.log('Checking upgrade conditions:');
+    console.log('  - status:', status);
+    console.log('  - paymentStatus:', paymentStatus);
+    console.log('  - Will upgrade?', status === 'Paid' && paymentStatus === 'COMPLETED');
+
     if (status === 'Paid' && paymentStatus === 'COMPLETED') {
+      console.log('\n🎉 UPGRADING USER TO VIP 🎉\n');
+
       // Set VIP status to lifetime (no expiration)
       await prisma.user.update({
         where: { id: payment.userId },
@@ -99,21 +110,21 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      if (!isTestMode) {
-        console.log('=== PRODUCTION VIP UPGRADE SUCCESSFUL ===');
-        console.log('User ID:', payment.userId);
-        console.log('Username:', payment.user.username);
-        console.log('Email:', payment.user.email);
-        console.log('Amount Paid:', payAmount, payCurrency);
-        console.log('Transaction ID:', txID);
-        console.log('Network:', network);
-        console.log('Payment ID:', payment.id);
-        console.log('Timestamp:', new Date().toISOString());
-        console.log('========================================');
-      } else {
-        console.log(`User ${payment.userId} upgraded to VIP successfully (TEST MODE)`);
-      }
+      console.log('╔══════════════════════════════════════════════════════╗');
+      console.log('║   VIP UPGRADE SUCCESSFUL ✓                           ║');
+      console.log('╚══════════════════════════════════════════════════════╝');
+      console.log('User ID:', payment.userId);
+      console.log('Username:', payment.user.username);
+      console.log('Email:', payment.user.email);
+      console.log('Amount Paid:', payAmount, payCurrency);
+      console.log('Transaction ID:', txID);
+      console.log('Network:', network);
+      console.log('Payment ID:', payment.id);
+      console.log('Mode:', isTestMode ? 'TEST' : 'PRODUCTION');
+      console.log('Timestamp:', new Date().toISOString());
+      console.log('═'.repeat(56) + '\n');
     } else if (status === 'Failed' || status === 'Expired') {
+      console.log('❌ Payment failed or expired:', status);
       // Log failed payment
       await prisma.activityLog.create({
         data: {
@@ -142,4 +153,17 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * GET - Test endpoint to verify webhook is accessible
+ */
+export async function GET(request: NextRequest) {
+  return NextResponse.json({
+    message: 'VIP Webhook endpoint is accessible',
+    timestamp: new Date().toISOString(),
+    url: request.url,
+    method: 'GET',
+    note: 'This endpoint receives POST requests from OxaPay. If you can see this, the webhook URL is accessible from the internet.',
+  });
 }
