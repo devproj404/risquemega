@@ -40,15 +40,23 @@ export async function POST(request: NextRequest) {
     });
 
     if (!payment) {
-      console.error('Payment not found:', orderId);
-      return NextResponse.json({ error: 'Payment not found' }, { status: 404 });
+      console.error('❌ Payment not found:', orderId);
+      // Still return "ok" to prevent OxaPay from retrying
+      return new NextResponse('ok', {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' },
+      });
     }
 
     // Verify this is a VIP payment
     const metadata = payment.metadata as any;
     if (metadata?.paymentType !== 'VIP_UPGRADE') {
-      console.error('Not a VIP payment:', orderId);
-      return NextResponse.json({ error: 'Invalid payment type' }, { status: 400 });
+      console.error('❌ Not a VIP payment:', orderId);
+      // Still return "ok" to prevent OxaPay from retrying
+      return new NextResponse('ok', {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' },
+      });
     }
 
     // Convert OxaPay status to our payment status
@@ -145,13 +153,19 @@ export async function POST(request: NextRequest) {
       console.log(`VIP payment failed for user ${payment.userId}:`, status);
     }
 
-    return NextResponse.json({ success: true, status: paymentStatus });
+    // OxaPay requires "ok" response (not JSON)
+    return new NextResponse('ok', {
+      status: 200,
+      headers: { 'Content-Type': 'text/plain' },
+    });
   } catch (error) {
-    console.error('VIP webhook error:', error);
-    return NextResponse.json(
-      { error: 'Webhook processing failed' },
-      { status: 500 }
-    );
+    console.error('❌ VIP webhook error:', error);
+    // Return "ok" even on errors to prevent OxaPay from retrying
+    // Errors are logged for debugging
+    return new NextResponse('ok', {
+      status: 200,
+      headers: { 'Content-Type': 'text/plain' },
+    });
   }
 }
 
