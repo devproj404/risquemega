@@ -60,20 +60,11 @@ export async function getCurrentUser() {
   const cookieStore = await cookies();
   const token = cookieStore.get('session')?.value;
 
-  if (!token) {
-    console.log('❌ No session cookie found');
-    return null;
-  }
-
-  console.log('🔑 Session token found:', token.substring(0, 10) + '...');
+  if (!token) return null;
 
   const session = await getSession(token);
-  if (!session) {
-    console.log('❌ Session not found or expired');
-    return null;
-  }
+  if (!session) return null;
 
-  console.log('✅ Session valid for user:', session.user.username);
   return session.user;
 }
 
