@@ -37,6 +37,16 @@ BACKUP_DIR="/var/backups/risquemega"
 MAX_BACKUPS=5
 HEALTH_CHECK_TIMEOUT=60
 
+# Detect docker-compose command (supports both old and new versions)
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+elif docker compose version &> /dev/null; then
+    DOCKER_COMPOSE="docker compose"
+else
+    echo -e "${RED}[ERROR]${NC} Neither 'docker-compose' nor 'docker compose' found!"
+    exit 1
+fi
+
 ###############################################################################
 # Pre-deployment checks
 ###############################################################################
@@ -74,7 +84,7 @@ BACKUP_TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_PATH="$BACKUP_DIR/backup_$BACKUP_TIMESTAMP"
 
 # Export current container states
-docker-compose ps > "$BACKUP_PATH.containers.txt" 2>&1 || true
+$DOCKER_COMPOSE ps > "$BACKUP_PATH.containers.txt" 2>&1 || true
 
 # Backup .env file
 if [ -f ".env" ]; then
@@ -182,9 +192,9 @@ log_success "Environment configuration OK"
 log_info "Stopping current containers..."
 
 # Graceful shutdown with timeout
-docker-compose down --timeout 30 || {
+$DOCKER_COMPOSE down --timeout 30 || {
     log_warning "Graceful shutdown failed, forcing stop..."
-    docker-compose down --timeout 5 || true
+    $DOCKER_COMPOSE down --timeout 5 || true
 }
 
 log_success "Containers stopped"
@@ -213,12 +223,12 @@ log_success "Docker cleanup completed"
 log_info "Building new Docker images (this may take a few minutes)..."
 
 # Build with no cache to ensure fresh build
-if docker-compose build --no-cache app; then
+if $DOCKER_COMPOSE build --no-cache app; then
     log_success "Docker images built successfully"
 else
     log_error "Docker build failed!"
     log_info "Attempting to restore from backup..."
-    docker-compose up -d
+    $DOCKER_COMPOSE up -d
     exit 1
 fi
 
@@ -229,7 +239,7 @@ fi
 log_info "Starting containers..."
 
 # Start in detached mode
-if docker-compose up -d; then
+if $DOCKER_COMPOSE up -d; then
     log_success "Containers started"
 else
     log_error "Failed to start containers"
@@ -347,7 +357,7 @@ log_info "=== Deployment Summary ==="
 echo ""
 
 # Container status
-docker-compose ps
+$DOCKER_COMPOSE ps
 
 echo ""
 log_info "=== Resource Usage ==="
@@ -362,9 +372,9 @@ log_success "Deployment completed successfully!"
 echo ""
 log_info "Useful commands:"
 echo "  - View logs:           docker logs -f leakynew-app"
-echo "  - Check status:        docker-compose ps"
-echo "  - Restart:             docker-compose restart"
-echo "  - Stop:                docker-compose down"
+echo "  - Check status:        $DOCKER_COMPOSE ps"
+echo "  - Restart:             $DOCKER_COMPOSE restart"
+echo "  - Stop:                $DOCKER_COMPOSE down"
 echo "  - View metrics:        docker stats"
 echo "  - Check security:      docker exec leakynew-app ps aux"
 echo ""
