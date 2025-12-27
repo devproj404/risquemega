@@ -373,6 +373,57 @@ log_info "Monitor site at: https://risquemega.net"
 echo ""
 
 ###############################################################################
+# Setup Cron Jobs
+###############################################################################
+
+log_info "Setting up cron jobs..."
+
+# Read CRON_SECRET from .env
+CRON_SECRET=$(grep "^CRON_SECRET=" .env | cut -d '=' -f2)
+
+if [ -z "$CRON_SECRET" ]; then
+    log_warning "CRON_SECRET not found in .env - cron jobs will not be authenticated"
+    CRON_SECRET="your-secret-here"
+fi
+
+# Cron job script path
+CRON_SCRIPT_DIR="/var/www/risquemega/scripts"
+CRON_SCRIPT="$CRON_SCRIPT_DIR/publish-scheduled.sh"
+
+# Create scripts directory if it doesn't exist
+mkdir -p "$CRON_SCRIPT_DIR"
+
+# Create the cron job script
+cat > "$CRON_SCRIPT" <<EOF
+#!/bin/bash
+# Auto-publish scheduled posts every 5 minutes
+curl -s -X GET "http://localhost:3000/api/cron/publish-scheduled" \\
+  -H "Authorization: Bearer $CRON_SECRET" \\
+  >> /var/log/risquemega-cron.log 2>&1
+EOF
+
+# Make it executable
+chmod +x "$CRON_SCRIPT"
+
+# Check if cron job already exists
+CRON_EXISTS=$(crontab -l 2>/dev/null | grep -F "publish-scheduled.sh" || echo "")
+
+if [ -z "$CRON_EXISTS" ]; then
+    # Add cron job (every 5 minutes)
+    (crontab -l 2>/dev/null; echo "*/5 * * * * $CRON_SCRIPT") | crontab -
+    log_success "Cron job added: Publish scheduled posts every 5 minutes"
+else
+    log_info "Cron job already exists (skipping)"
+fi
+
+# Create log file if it doesn't exist
+touch /var/log/risquemega-cron.log
+chmod 644 /var/log/risquemega-cron.log
+
+log_success "Cron jobs configured"
+log_info "View cron logs: tail -f /var/log/risquemega-cron.log"
+
+###############################################################################
 # Optional: Send notification
 ###############################################################################
 
