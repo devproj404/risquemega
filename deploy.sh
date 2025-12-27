@@ -146,6 +146,57 @@ else
     log_success "SSL certificates found"
 fi
 
+# Validate SSL certificates
+log_info "Validating SSL certificates..."
+
+# Check if certificate is valid
+if ! openssl x509 -in nginx/ssl/certificate.crt -noout -text &>/dev/null; then
+    log_error "Invalid SSL certificate format!"
+    log_info "Please check nginx/ssl/certificate.crt"
+    exit 1
+fi
+
+# Check if private key is valid
+if ! openssl rsa -in nginx/ssl/private.key -check -noout &>/dev/null; then
+    log_error "Invalid private key format!"
+    log_info "Please check nginx/ssl/private.key"
+    exit 1
+fi
+
+# Check if certificate and private key match
+CERT_MODULUS=$(openssl x509 -noout -modulus -in nginx/ssl/certificate.crt 2>/dev/null | openssl md5)
+KEY_MODULUS=$(openssl rsa -noout -modulus -in nginx/ssl/private.key 2>/dev/null | openssl md5)
+
+if [ "$CERT_MODULUS" != "$KEY_MODULUS" ]; then
+    log_error "Certificate and private key do not match!"
+    log_info "The certificate and private key are for different domains"
+    exit 1
+fi
+
+# Check certificate expiration
+CERT_END_DATE=$(openssl x509 -enddate -noout -in nginx/ssl/certificate.crt | cut -d= -f2)
+CERT_END_EPOCH=$(date -d "$CERT_END_DATE" +%s 2>/dev/null || date -j -f "%b %d %T %Y %Z" "$CERT_END_DATE" +%s 2>/dev/null)
+CURRENT_EPOCH=$(date +%s)
+DAYS_UNTIL_EXPIRY=$(( ($CERT_END_EPOCH - $CURRENT_EPOCH) / 86400 ))
+
+if [ $DAYS_UNTIL_EXPIRY -lt 0 ]; then
+    log_error "SSL certificate has EXPIRED!"
+    log_info "Expired on: $CERT_END_DATE"
+    log_info "Please renew your Cloudflare Origin Certificate"
+    exit 1
+elif [ $DAYS_UNTIL_EXPIRY -lt 30 ]; then
+    log_warning "SSL certificate expires soon (in $DAYS_UNTIL_EXPIRY days)"
+    log_info "Expiry date: $CERT_END_DATE"
+else
+    log_success "SSL certificate is valid (expires in $DAYS_UNTIL_EXPIRY days)"
+fi
+
+# Show certificate details
+CERT_SUBJECT=$(openssl x509 -noout -subject -in nginx/ssl/certificate.crt | sed 's/subject=//')
+CERT_ISSUER=$(openssl x509 -noout -issuer -in nginx/ssl/certificate.crt | sed 's/issuer=//')
+log_info "Certificate issued to: $CERT_SUBJECT"
+log_info "Certificate issued by: $CERT_ISSUER"
+
 ###############################################################################
 # Environment configuration check
 ###############################################################################
