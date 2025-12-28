@@ -49,3 +49,13 @@ server-old/
 # Claude and documentation files
 .claude/
 *.md
+
+# SSL Certificates and Private Keys (NEVER COMMIT THESE!)
+nginx/ssl/*.crt
+nginx/ssl/*.key
+*.crt
+*.key
+Origin Certificate.txt
+Private Key.txt
+certificate.crt
+private.key
