@@ -131,15 +131,15 @@ log_info "Checking SSL certificates..."
 if [ ! -f "nginx/ssl/certificate.crt" ] || [ ! -f "nginx/ssl/private.key" ]; then
     log_warning "SSL certificates not found in nginx/ssl/"
 
-    # Check if they exist in root with different names
-    if [ -f "Origin Certificate.txt" ] && [ -f "Private Key.txt" ]; then
-        log_info "Copying SSL certificates from root directory..."
-        mkdir -p nginx/ssl
-        cp "Origin Certificate.txt" nginx/ssl/certificate.crt
-        cp "Private Key.txt" nginx/ssl/private.key
+    # Check if they exist in nginx/ssl with source names
+    if [ -f "nginx/ssl/Origin Certificate.txt" ] && [ -f "nginx/ssl/Private Key.txt" ]; then
+        log_info "Copying SSL certificates from nginx/ssl source files..."
+        cp "nginx/ssl/Origin Certificate.txt" nginx/ssl/certificate.crt
+        cp "nginx/ssl/Private Key.txt" nginx/ssl/private.key
         log_success "SSL certificates copied"
     else
-        log_error "SSL certificates not found! Please add them before deployment."
+        log_error "SSL certificate source files not found!"
+        log_info "Please ensure 'Origin Certificate.txt' and 'Private Key.txt' are in nginx/ssl/"
         exit 1
     fi
 else

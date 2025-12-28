@@ -50,12 +50,8 @@ server-old/
 .claude/
 *.md
 
-# SSL Certificates and Private Keys (NEVER COMMIT THESE!)
-nginx/ssl/*.crt
-nginx/ssl/*.key
-*.crt
-*.key
-Origin Certificate.txt
-Private Key.txt
-certificate.crt
-private.key
+# SSL Certificates and Private Keys
+# Allow Origin Certificate and Private Key in nginx/ssl for deployment
+# But block the actual certificate.crt and private.key (auto-generated from these)
+nginx/ssl/certificate.crt
+nginx/ssl/private.key
