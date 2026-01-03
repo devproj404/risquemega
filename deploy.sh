@@ -71,6 +71,44 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 ###############################################################################
+# Port Conflict Detection and Cleanup
+###############################################################################
+
+log_info "Checking for port conflicts..."
+
+# Check if system nginx is running (conflicts with Docker nginx)
+if systemctl is-active --quiet nginx 2>/dev/null; then
+    log_warning "System nginx service is running on port 80/443"
+    log_info "Stopping system nginx to avoid port conflicts..."
+    systemctl stop nginx
+    systemctl disable nginx 2>/dev/null || true
+    log_success "System nginx stopped and disabled"
+fi
+
+# Check for orphaned docker-proxy processes
+ORPHANED_PROXY=$(ps aux | grep docker-proxy | grep -E ':(80|443|3000)' | grep -v grep || true)
+if [ ! -z "$ORPHANED_PROXY" ]; then
+    log_warning "Found orphaned docker-proxy processes"
+    log_info "Cleaning up orphaned processes..."
+    pkill -9 docker-proxy 2>/dev/null || true
+    sleep 2
+    log_success "Orphaned processes cleaned"
+fi
+
+# Check for processes using required ports
+for PORT in 80 443 3000; do
+    PORT_USER=$(lsof -ti:$PORT 2>/dev/null || true)
+    if [ ! -z "$PORT_USER" ]; then
+        log_warning "Port $PORT is in use by PID: $PORT_USER"
+        log_info "Killing process on port $PORT..."
+        kill -9 $PORT_USER 2>/dev/null || true
+        sleep 1
+    fi
+done
+
+log_success "Port conflict check completed"
+
+###############################################################################
 # Backup current state
 ###############################################################################
 
@@ -128,23 +166,18 @@ fi
 
 log_info "Checking SSL certificates..."
 
-if [ ! -f "nginx/ssl/certificate.crt" ] || [ ! -f "nginx/ssl/private.key" ]; then
-    log_warning "SSL certificates not found in nginx/ssl/"
-
-    # Check if they exist in nginx/ssl with source names
-    if [ -f "nginx/ssl/Origin Certificate.txt" ] && [ -f "nginx/ssl/Private Key.txt" ]; then
-        log_info "Copying SSL certificates from nginx/ssl source files..."
-        cp "nginx/ssl/Origin Certificate.txt" nginx/ssl/certificate.crt
-        cp "nginx/ssl/Private Key.txt" nginx/ssl/private.key
-        log_success "SSL certificates copied"
-    else
-        log_error "SSL certificate source files not found!"
-        log_info "Please ensure 'Origin Certificate.txt' and 'Private Key.txt' are in nginx/ssl/"
-        exit 1
-    fi
-else
-    log_success "SSL certificates found"
+# Check if source certificate files exist
+if [ ! -f "nginx/ssl/Origin Certificate.txt" ] || [ ! -f "nginx/ssl/Private Key.txt" ]; then
+    log_error "SSL certificate source files not found!"
+    log_info "Please ensure 'Origin Certificate.txt' and 'Private Key.txt' are in nginx/ssl/"
+    exit 1
 fi
+
+# ALWAYS copy from source files to ensure latest certificates are used
+log_info "Copying SSL certificates from source files..."
+cp "nginx/ssl/Origin Certificate.txt" nginx/ssl/certificate.crt
+cp "nginx/ssl/Private Key.txt" nginx/ssl/private.key
+log_success "SSL certificates copied and updated"
 
 # Validate SSL certificates
 log_info "Validating SSL certificates..."
