@@ -11,8 +11,7 @@ services:
         - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
     container_name: leakynew-app
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    network_mode: "host"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
@@ -27,8 +26,6 @@ services:
       - PAYMENT_TEST_MODE=${PAYMENT_TEST_MODE}
     env_file:
       - .env
-    networks:
-      - app-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
@@ -40,17 +37,13 @@ services:
     image: nginx:alpine
     container_name: leakynew-nginx
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
+    network_mode: "host"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - ./nginx/logs:/var/log/nginx
     depends_on:
       - app
-    networks:
-      - app-network
 
 networks:
   app-network:
