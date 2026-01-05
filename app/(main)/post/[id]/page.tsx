@@ -73,6 +73,7 @@ export default function PostDetailPage() {
   const [isVipUpgradeModalOpen, setIsVipUpgradeModalOpen] = useState(false);
   const [userIsVip, setUserIsVip] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true); // Track auth loading state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{ posts: any[]; actresses: any[] }>({
     posts: [],
@@ -195,11 +196,14 @@ export default function PostDetailPage() {
 
           // Process user data
           if (userData.status === 'fulfilled' && userData.value?.user) {
-            setUserIsVip(userData.value.user.isVip || false);
+            const user = userData.value.user;
+            setUserIsVip(user.isVip === true); // Explicit boolean check
             setIsLoggedIn(true);
           } else {
+            setUserIsVip(false);
             setIsLoggedIn(false);
           }
+          setIsCheckingAuth(false); // Auth check complete
 
           // ✅ Secondary data loaded
           setIsLoadingSecondary(false);
@@ -209,6 +213,7 @@ export default function PostDetailPage() {
         console.error('Failed to fetch post:', error);
         setIsLoading(false);
         setIsLoadingSecondary(false);
+        setIsCheckingAuth(false); // Complete auth check on error
         NProgress.done(); // Complete on error too
       }
     };
@@ -220,6 +225,12 @@ export default function PostDetailPage() {
 
   const handleAccessClick = (e: React.MouseEvent) => {
     e.preventDefault();
+
+    // Wait for auth check to complete
+    if (isCheckingAuth) {
+      toast.info('Please wait...', { duration: 1000 });
+      return;
+    }
 
     // If user is not logged in, redirect to login with callback
     if (!isLoggedIn) {
@@ -583,26 +594,28 @@ export default function PostDetailPage() {
                 {post.isVip ? (
                   <button
                     onClick={handleAccessClick}
-                    className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black px-6 py-2.5 rounded-lg transition-all text-sm font-bold shadow-lg shadow-yellow-500/50 flex items-center gap-2"
+                    disabled={isCheckingAuth}
+                    className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-black px-6 py-2.5 rounded-lg transition-all text-sm font-bold shadow-lg shadow-yellow-500/50 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <img
                       src="/images/crown.svg"
                       alt="VIP"
                       className="w-6 h-6"
                     />
-                    VIP Access
+                    {isCheckingAuth ? 'Loading...' : (isLoggedIn && userIsVip ? 'VIP Access' : 'Upgrade to VIP')}
                   </button>
                 ) : (
                   <button
                     onClick={handleAccessClick}
-                    className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-2.5 rounded-lg transition-all text-sm font-bold shadow-lg shadow-green-500/50 flex items-center gap-2"
+                    disabled={isCheckingAuth}
+                    className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-2.5 rounded-lg transition-all text-sm font-bold shadow-lg shadow-green-500/50 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <img
                       src="/images/free.svg"
                       alt="Free"
                       className="w-8 h-8"
                     />
-                    Free Access
+                    {isCheckingAuth ? 'Loading...' : (isLoggedIn ? 'Free Access' : 'Login to Access')}
                   </button>
                 )}
               </div>
