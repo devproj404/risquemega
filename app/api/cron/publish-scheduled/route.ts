@@ -5,13 +5,18 @@ import { invalidatePattern } from '@/lib/cache';
 /**
  * Cron endpoint to publish scheduled posts
  *
- * This endpoint is called periodically (every 5 minutes) by Vercel Cron
- * to check for posts that are scheduled to be published and publish them.
+ * VERCEL HOBBY PLAN LIMITATION:
+ * - Hobby plan only allows DAILY cron jobs (runs at midnight UTC)
+ * - For frequent scheduling (every 5 minutes), you need Pro plan ($20/month)
+ * - Workaround: Manually trigger via admin dashboard or external webhook
  *
- * Vercel Hobby Plan Limits:
- * - 1 cron job allowed (we use this one)
- * - Max execution time: 10 seconds (Hobby) / 60 seconds (Pro)
- * - Runs every 5 minutes
+ * Vercel Plan Comparison:
+ * - Hobby: Daily cron only (0 0 * * *) - FREE
+ * - Pro: Any schedule (*/5 * * * *) - $20/month
+ *
+ * Manual Trigger:
+ * - Call this endpoint with CRON_SECRET header to manually publish posts
+ * - Example: curl -X GET /api/cron/publish-scheduled -H "Authorization: Bearer $CRON_SECRET"
  *
  * Security:
  * - Vercel Cron automatically authenticates with the deployment
