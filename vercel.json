@@ -4,5 +4,21 @@
       "path": "/api/cron/publish-scheduled",
       "schedule": "*/5 * * * *"
     }
+  ],
+  "functions": {
+    "app/api/cron/publish-scheduled/route.ts": {
+      "maxDuration": 60
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/cron/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        }
+      ]
+    }
   ]
 }
