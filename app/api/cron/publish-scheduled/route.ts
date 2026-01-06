@@ -12,7 +12,7 @@ import { invalidatePattern } from '@/lib/cache';
  *
  * Vercel Plan Comparison:
  * - Hobby: Daily cron only (0 0 * * *) - FREE
- * - Pro: Any schedule (*/5 * * * *) - $20/month
+ * - Pro: Any schedule (every 5 minutes) - $20/month
  *
  * Manual Trigger:
  * - Call this endpoint with CRON_SECRET header to manually publish posts
